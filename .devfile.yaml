@@ -4,7 +4,8 @@ metadata:
 components:
   - name: tools
     container:
-      image: quay.io/devfile/universal-developer-image@sha256:75034f0dad7a6df3db53e20fc3597b68f2311e556164d47aa9151d3b3584bbce
+      image: quay.io/devfile/universal-developer-image:ubi8-latest
+      args: ['tail', '-f', '/dev/null']      
       memoryLimit: 8Gi
       memoryRequest: 1Gi
       cpuLimit: "2"
