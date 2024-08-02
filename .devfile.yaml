@@ -45,6 +45,11 @@ components:
           name: debug
           protocol: http
           targetPort: 5005
+        - name: tests
+          targetPort: 8081
+          exposure: none
+          secure: false
+          protocol: tcp
       volumeMounts:
         - name: m2
           path: /home/user/.m2
