@@ -22,34 +22,34 @@ spec:
         - group_id
         - artifact_id
       properties:
-         component_id:
+        component_id:
           title: Name
           type: string
           description: Unique name of the component
           default: my-quarkus-app
           ui:field: EntityNamePicker
           maxLength: 23
-          group_id:
+        group_id:
             title: Group Id
             type: string
             default: io.quarkus.workshop
             description: Maven Group Id
-          artifact_id:
+        artifact_id:
             title: Artifact Id
             type: string
             default: villain-service
             description: Maven Artifact Id
-          java_package_name:
+        java_package_name:
             title: Java Package Name
             default: io.quarkus.workshop.villain
             type: string
             description: Name for the java package. eg (com.redhat.blah)
-          description:
+        description:
             title: Description
             type: string
             description: Build your first fighter with Quarkus.
             default: My Villain Fighter 
-          system:
+        system:
             title: System Application
             type: string
             description: Name of the "System" application (which contains all the services)
