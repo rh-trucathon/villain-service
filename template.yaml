@@ -3,7 +3,7 @@ kind: Template
 metadata:
   name: quarkus-villain-service
   title: quarkus-villain-service
-  description:  Create a quarkus-villain-service
+  description:  Create a quarkus-villain-service en or
   tags:
     - recommended
     - java
