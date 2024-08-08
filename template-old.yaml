@@ -1,9 +1,9 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: quarkus-villain-service
-  title: quarkus-villain-service
-  description:  Create a quarkus-villain-service
+  name: quarkus-reactive-template-hero-1
+  title: quarkus-reactive-template-hero-1
+  description: 1 Create a quarkus-reactive-template microservice hero
   tags:
     - recommended
     - java
@@ -17,42 +17,40 @@ spec:
       required:
         - component_id
         - java_package_name
-        - api_endpoint
-        - system
-        - group_id
-        - artifact_id
+        - cluster_info
       properties:
-         component_id:
+        cluster_info:
+          title: Name
+          type: string
+          description: Use the wildcard displayed in your browser 12
+          default: .apps.cluster-rw97m.sandbox266.opentlc.com
+        component_id:
           title: Name
           type: string
           description: Unique name of the component
           default: my-quarkus-app
           ui:field: EntityNamePicker
           maxLength: 23
-          group_id:
-            title: Group Id
-            type: string
-            default: io.quarkus.workshop
-            description: Maven Group Id
-          artifact_id:
-            title: Artifact Id
-            type: string
-            default: villain-service
-            description: Maven Artifact Id
-          java_package_name:
-            title: Java Package Name
-            default: io.quarkus.workshop.villain
-            type: string
-            description: Name for the java package. eg (com.redhat.blah)
-          description:
-            title: Description
-            type: string
-            description: Build your first fighter with Quarkus.
-            default: My Villain Fighter 
-          system:
-            title: System Application
-            type: string
-            description: Name of the "System" application (which contains all the services)
+        group_id:
+          title: Group Id
+          type: string
+          default: io.quarkus.workshop
+          description: Maven Group Id
+        artifact_id:
+          title: Artifact Id
+          type: string
+          default: villain-service
+          description: Maven Artifact Id
+        java_package_name:
+          title: Java Package Name
+          default: io.quarkus.workshop.villain
+          type: string
+          description: Name for the java package. eg (com.redhat.blah)
+        description:
+          title: Description
+          type: string
+          description: Build your first fighter with Quarkus.
+          default: My Villain Fighter 
     - title: Provide Image Registry Information
       required:
         - image_registry
@@ -88,7 +86,7 @@ spec:
                   title: Image Host
                   type: string
                   description: Host for storing image
-                  default: 
+                  default: quay-rw97m.apps.cluster-rw97m.sandbox266.opentlc.com
                 image_organization:
                   title: Organization
                   type: string
@@ -108,12 +106,12 @@ spec:
           type: object
           properties:
             host:
-              title: Repo Host
+              title: Repo Host Gitlab
               type: string
               description: Your SCM host
-              default: gitlab-gitlab.apps.cluster-rw97m.sandbox266.opentlc.com              	
+              default: gitlab-gitlab
               enum:
-                - gitlab-gitlab.apps.cluster-rw97m.sandbox266.opentlc.com
+                - gitlab-gitlab
             owner:
               title: Repo Owner
               type: string
@@ -146,29 +144,25 @@ spec:
           artifact_id: ${{ parameters.artifact_id }}
           java_package_name: ${{ parameters.java_package_name }}
           owner: ${{ user.entity.metadata.name }}
-          cluster: .apps.cluster-4tqns.sandbox1361.opentlc.com
-          host: ${{ parameters.repo.host }}
+          cluster: ${{ parameters.cluster_info }}
+          host: ${{ parameters.repo.host }}${{ parameters.cluster_info }}
           destination: ${{ parameters.repo.owner }}/${{ parameters.component_id }}
           quay_destination: ${{ parameters.image_organization}}/${{ parameters.component_id }}
           port: 8080
           verify_commits: ${{ parameters.repo.verify_commits }}
-          api_endpoint: ${{ parameters.api_endpoint }}
-          system: ${{ parameters.system }}
 
     - id: publish
       name: Publish
       action: publish:gitlab
       input:
-        repoUrl: "${{ parameters.repo.host }}?owner=${{ parameters.repo.owner }}&repo=${{parameters.component_id}}"
+        repoUrl: "${{ parameters.repo.host }}${{ parameters.cluster_info }}?owner=${{ parameters.repo.owner }}&repo=${{parameters.component_id}}"
         repoVisibility: public
-
     - id: register
       name: Register
       action: catalog:register
       input:
         repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
         catalogInfoPath: "/catalog-info.yaml"
-
     - id: template-gitops-deployment
       name: Generating Deployment Resources
       action: fetch:template
@@ -178,11 +172,11 @@ spec:
         values:
           component_id: ${{ parameters.component_id }}
           description: ${{ parameters.description }}
-          destination: https://${{ parameters.repo.host }}/${{ parameters.repo.owner }}/${{parameters.component_id}}-gitops.git
-          source_repository: https://${{ parameters.repo.host }}/${{ parameters.repo.owner }}/${{parameters.component_id}}.git
+          destination: https://${{ parameters.repo.host }}${{ parameters.cluster_info }}/${{ parameters.repo.owner }}/${{parameters.component_id}}-gitops.git
+          source_repository: https://${{ parameters.repo.host }}${{ parameters.cluster_info }}/${{ parameters.repo.owner }}/${{parameters.component_id}}.git
           repository_name: ${{parameters.component_id}}
           git_owner: ${{ parameters.repo.owner }}
-          cluster: .apps.cluster-4tqns.sandbox1361.opentlc.com
+          cluster: ${{ parameters.cluster_info }}
           namespace: ${{ parameters.component_id }}-dev
           image_registry: ${{ parameters.image_registry }}
           image_host: ${{ parameters.image_host }}
@@ -190,7 +184,7 @@ spec:
           image_name: ${{ parameters.component_id }}
           image_tag: ${{ parameters.image_tag }}
           port: 8080
-          repository_host: ${{ parameters.repo.host }}
+          repository_host: ${{ parameters.repo.host }}${{ parameters.cluster_info }}
           deployment_name: quarkus-template
           user: ${{ user.entity.metadata.name }}
           verify_commits: ${{ parameters.repo.verify_commits }}
@@ -200,7 +194,7 @@ spec:
       name: Publishing to Resource Repository
       action: publish:gitlab
       input:
-        repoUrl: "${{ parameters.repo.host }}?owner=${{ parameters.repo.owner }}&repo=${{parameters.component_id}}-gitops"
+        repoUrl: "${{ parameters.repo.host }}${{ parameters.cluster_info }}?owner=${{ parameters.repo.owner }}&repo=${{parameters.component_id}}-gitops"
         title: gitops resources for ${{ parameters.component_id }}
         description: gitops resources for ${{ parameters.component_id }}
         sourcePath: ./tenant-gitops
@@ -213,7 +207,7 @@ spec:
         appName: ${{ parameters.component_id }}-bootstrap
         argoInstance: main
         namespace: janus-argocd
-        repoUrl: https://${{ parameters.repo.host }}/${{ parameters.repo.owner }}/${{ parameters.component_id }}-gitops.git
+        repoUrl: https://${{ parameters.repo.host }}${{ parameters.cluster_info }}/${{ parameters.repo.owner }}/${{ parameters.component_id }}-gitops.git
         path: 'argocd/'
 
   output:
