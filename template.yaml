@@ -17,7 +17,6 @@ spec:
       required:
         - component_id
         - java_package_name
-        - api_endpoint
         - system
         - group_id
         - artifact_id
