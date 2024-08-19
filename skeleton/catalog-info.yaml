@@ -55,4 +55,3 @@ spec:
   owner: ${{values.owner | dump}}
   definition:
     $text: ./openapi.yaml
-
