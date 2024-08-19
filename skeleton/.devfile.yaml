@@ -1,89 +1,79 @@
 schemaVersion: 2.2.0
 metadata:
-  name: villain-service
+  generateName: ${{values.artifact_id}}
 components:
-  - name: tools
+  - name: development-tooling
     container:
+#      image: quay.io/devfile/universal-developer-image:ubi8-277c10c
       image: quay.io/devfile/universal-developer-image:ubi8-latest
-      args: ['tail', '-f', '/dev/null']      
-      memoryLimit: 8Gi
-      memoryRequest: 1Gi
-      cpuLimit: "2"
-      cpuRequest: 200m
       env:
-        - name: QUARKUS_HTTP_HOST
-          value: 0.0.0.0
-        - name: KUBEDOCK_PARAMS
-          value: "--reverse-proxy --kubeconfig /home/user/.kube/config --initimage quay.io/agiertli/kubedock:0.13.0"
         - name: USE_JAVA21
           value: "true"
-        - value: /home/jboss/.m2
-          name: MAVEN_CONFIG
-        - value: -Xmx4G -Xss128M -XX:MetaspaceSize=1G -XX:MaxMetaspaceSize=2G
-          name: MAVEN_OPTS
         - name: KUBEDOCK_ENABLED
-          value: 'true'
+          value: "true"
         - name: DOCKER_HOST
-          value: 'tcp://127.0.0.1:2475'
+          value: "tcp://127.0.0.1:2475"
         - name: TESTCONTAINERS_RYUK_DISABLED
-          value: 'true'
-        - name: TESTCONTAINERS_CHECKS_DISABLE
-          value: 'true'          
+          value: "true"
+#         - name: KUBEDOCK_PARAMS
+# #          value: "--reverse-proxy --kubeconfig /home/user/.kube/config --initimage quay.io/agiertli/kubedock:0.13.0"
+#           value: "--reverse-proxy"
+        - name: QUARKUS_HTTP_HOST
+          value: 0.0.0.0
+        - name: MAVEN_OPTS
+          value: "-Dmaven.repo.local=/home/user/.m2/repository"
+      memoryLimit: 4Gi
+      cpuLimit: 2500m
+      volumeMounts:
+        - name: m2
+          path: /home/user/.m2
+{%- if values.verify_commits == 'enabled' %}
+        - name: home
+          path: /projects/home
+{%- endif %}
       endpoints:
-        - exposure: none
-          name: kubedock
-          protocol: tcp
-          targetPort: 2475      
-        - exposure: public
-          name: http-booster
-          protocol: http
+        - name: quarkus-dev
           targetPort: 8080
-          attributes:
-            discoverable: true
-            urlRewriteSupported: true
-        - exposure: internal
-          name: debug
-          protocol: http
+          exposure: public
+          secure: false
+          protocol: https
+        - name: debug
           targetPort: 5005
+          exposure: none
+          secure: false
+          protocol: tcp
         - name: tests
           targetPort: 8081
           exposure: none
           secure: false
           protocol: tcp
-      volumeMounts:
-        - name: m2
-          path: /home/user/.m2
   - name: m2
     volume:
-      size: 10G
+      size: 1G
 commands:
-  - id: 01-run-tests
+  - id: enabledevui
     exec:
-      label: 01. Run Tests
-      component: quarkus-tools
-      commandLine: mvn verify
-  - id: 02-live-coding
+      label: "0. Enable Quarkus Dev UI"
+      component: development-tooling
+      commandLine: "export DEVUI_URL=$(oc get dw -o=jsonpath='{.items[?(@.status.phase=="Running")].metadata.name}');sed -i 's/<SOMETHING>/'"$DEVUI_URL"'/g' /projects/hero4/src/main/resources/application.properties;"
+      group:
+        kind: build
+        isDefault: true
+  - id: package
     exec:
-      label: 02. Start Live Coding
-      component: quarkus-tools
-      commandLine: mvn clean quarkus:dev -Dquarkus.http.host=0.0.0.0
-  - id: 03-package-app
+      label: "1. Package the application"
+      component: development-tooling
+      commandLine: "./mvnw package"
+      group:
+        kind: build
+        isDefault: true
+  
+  - id: start-dev
     exec:
-      label: 03. Package App for OpenShift
-      component: quarkus-tools
-      commandLine: mvn package -DskipTests
-  - id: 04-build-native
-    exec:
-      label: 04. Build Native App
-      component: quarkus-tools
-      commandLine: mvn package -Pnative -DskipTests
-  - id: 05-run-fast-jar
-    exec:
-      label: 05. Run Fast Jar
-      component: quarkus-tools
-      commandLine: java -Dquarkus.http.port=8081 -jar target/quarkus-app/quarkus-run.jar
-  - id: 06-run-native
-    exec:
-      label: 06. Run Native App
-      component: quarkus-tools
-      commandLine: ./target/people-1.0-SNAPSHOT-runner -Dquarkus.http.port=8081      
+      label: "2. Start Development mode (Hot reload + debug)"
+      component: development-tooling
+      commandLine: "./mvnw compile quarkus:dev"
+      group:
+        kind: run
+        isDefault: true
+

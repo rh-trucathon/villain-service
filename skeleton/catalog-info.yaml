@@ -12,7 +12,7 @@ spec:
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
-  name: ${{values.component_id | dump}}
+  name: ${{ values.owner }}-${{ values.component_id }}
   {%- if values.description %}
   description: ${{values.description | dump}}
   {%- endif %}
@@ -31,18 +31,21 @@ metadata:
     - url: https://devspaces${{values.cluster}}/#https://${{values.host}}/${{values.destination}}
       title: OpenShift Dev Spaces (VS Code)
       icon: web
+    # - url: https://devspaces${{values.cluster}}/#https://${{values.host}}/${{values.destination}}?che-editor=che-incubator/che-idea/latest
+    #   title: OpenShift Dev Spaces (JetBrains IntelliJ)
+    #   icon: web
 spec:
   type: service
   lifecycle: production
-  owner: ${{values.owner | dump}}
+  owner: ${{ values.owner }}
   providesApis:
-    - ${{values.component_id | dump}}
+    - ${{ values.owner }}-${{ values.component_id }}
   system: ${{values.system}}
 ---
 apiVersion: backstage.io/v1alpha1
 kind: API
 metadata:
-  name: ${{values.component_id | dump}}
+  name: ${{ values.owner }}-${{ values.component_id }}
   {%- if values.description %}
   description: ${{values.description | dump}}
   {%- endif %}
